@@ -1,0 +1,192 @@
+# importing data
+pd.read_csv()
+pd.read_excel()
+
+# preview data
+df.head()
+df.tail()
+
+# check the data type in the dataframe
+df.dtypes
+
+# convert the column to different data type
+# convert the price series into float, original type could be string
+df[['price']] = df[['price']].astype('float')
+
+# quick check the stastical summay
+df.describe()
+df.describe(include='all')
+
+# basic information of the dataset
+df.info()
+
+# access a column, each column called became a series 
+df['column_name']
+
+# dealing with missing values in dataframe
+df.dropna() # axis=0 drops the entire row, axis=1 drops the entire column
+# example, drop the rows which has nan in the price column, inplace=True
+# replace the original df with the processed df
+df.dropna(subset=['price'], axis=0, inplace=True)
+
+# instead of drop the row or column, the missing value could be replaced
+# by mean value
+# example, calculate the mean of the column, then replace nan with mean
+mean = df['normalized-losses'].mean()
+df['normalized-losses'].replace(np.nan, mean)
+
+# data formatting, 
+# example convert 'miles per gallon' to 'L/100km' in car dataset
+df['city-mpg'] = 235/df['city-mpg']
+df.rename(columns={'city-mpg':'city-L/100km'}, inplace=True) 
+
+# data normalization, columns may have very different scales, the 
+# regression made based on the data may biased. Normalization may useful
+# simple methods of normalizaing data, example, x_new = x_old/x_max
+# alternative x_new = (x_old-mean)/stdev
+
+# bin data into categories
+# using np to create categories range, create a list which to be used as
+# category names, use the pd.cut() to assign the bins
+bins = np.linspace(min(df['price']), max(['price']), 4)
+group_names = ['low','medium','high']
+df['price-binned'] = pd.cut(df['price'], bins,labels=group_names, include_lowest=True)
+
+# turning categorical variables into quantitative variables
+# use the pandas.get_dummies() method convert categorical variables to 
+# dummy variables (0 or 1)
+pd.get_dummies(df['fuel'])
+
+# exploratory data analysis
+df.describe()
+# descriptive statistics, summarize the categorical data is by using the
+# value_count() method
+drive_wheels_counts = df['drive-wheels'].value_counts().to_frame()
+
+# scatter plot, here the course use plt.scatter() function
+y = df['price']
+x = df['engine-size']
+plt.scatter(x,y)
+plt.title("Scatter plot of engine size vs price")
+plt.xlabel('engine size')
+plt.ylable('price')
+
+# categorical variables that describe a characteristic of a data unit, and are selected
+# from a small group of categories, the categorical variables can have the type 'object'
+# or 'int64'. a good way to visualize categorical variable is by using boxplot
+# boxplot, here the course use seaborn.boxplot() function
+# pip install seaborn
+import seaborn as sns
+sns.boxplot(x='drive-wheels',y='price',data=df)
+
+# groupBy function df.groupby()
+# example group the data with two parameters, then get the mean value
+df_grp = df.groupby(['drive-wheels', 'body-style'], as_index=False).mean()
+# pd.pivot() function display one variable along the columns and the other 
+# variable displayed along the rows - this method allows user to have a 
+# clear view of the data grouped
+df_pivot = df_grp.pivot(index='drive-wheels', columns='body-style')
+# the correlation that pd.pivot() created could be presented ina heatmap
+plt.pcolor(df_pivot, cmap='RdBu')
+plt.colorbar()
+plt.show()
+
+# correlation - measure to what extent different variables are independent
+# correlation between two features
+sns.regplot(x='engine-size', y='price', data=df)
+plt.ylim(0,)
+
+# correlation - statistics
+# Pearson correlation - measure the strength of the correlation between 
+# two features
+# two values given after computation, correction coefficient and P-value
+# Correlation corefficent clost to 1 or -1 indicates the largest positive
+# or negitive relationship, close to 0 indicates no relationship
+# P-value < 0.001 indicates strong certainty in the result whereas larger
+# P-value indicates weak certainty in the result
+from scipy import stats
+pearson_coef, p_value = stats.pearsonr(df['horsepower'], df['price'])
+
+# association between two categorical variables: Chi-square
+# different method used to measure the correlation for categorical variable
+# compare to the continuous variable
+# chi-square test for association
+# the test is intended to test how likely it is that an observed distribution 
+# is due to chance.
+# the chi-square test a null hypothesis that variables are independent
+# the chi-square does not tell you the type of relationship that exists 
+# between both variables; but only that a relationship exists
+# chi-square value is computed with formula 
+# chi-square = sum(O_i-E_i)^2/E_i for i = 0 to i, whereas O_i is ith 
+# observation, E_i is ith expectation
+# after computation, check the lookup table, based on the degree of freedom
+# and the chi-square value, get the probability value p. 
+scipy.stats.chi2_contingency(cont_table, correction=True)
+
+# linear regression and multiple linear regression
+# simple linear regression y=b_0+b_1x
+# import linear_model from scikit-learn
+from sklearn.linear_model import LinearRegression
+# create a linear regression object 
+lm=LinearRegression()
+x=df[['highway-mpg']]
+y=['price']
+# use lm.fit() to fit the model
+lm.fit(x,y)
+y_predict = lm.predict(x)
+# the slope and intercept could be called
+lm.intercept_
+lm.coef_
+lm.score(x,y) #compute the R-square value
+
+# Multiple linear regression is used to explain the relationship between
+# one continuous Y target variable with two or more predictor X variables
+# Y=b_0+b_1*X_1+b_2*X_2+...
+z=df[['horsepower','curb-weight','engine-size','highway-mpg']]
+lm.fit(z, df['price'])
+y_predict = lm.predict(z)
+lm.coef_
+lm.intercept_
+
+# model evaluation using visualization, here using seaborn
+import seaborn as sns
+sns.regplot(x='highway-mpg', y='price', data=df)
+plt.ylim(0,)
+# the residue plot could be draw
+sns.residplot(df['highway-mpg'], df['price'])
+
+# distribution plot, which helps to identify if the regression is proper
+# to create the model that generate the result has similar distribution
+# of the predicted parameter
+import seaborn as sns
+# first plot the data in red, not hist=False indicated plot the distribution
+# instead of the histogram
+ax1 = sns.distplot(df['price'], hist=False, color='r', label='Actual Value')
+# second plot the predicted result distribution in blue
+sns.displot(Yhat, hist=False, color='b', label='Fitted Value', ax=ax1)
+
+# polynomial regression using PolynomialFeatures
+from sklearn.preprocessing import PolynomialFeatures
+pr = PolynomialFeatures(degree=2, include_bias=False)
+pr.fit_transform([[1,2]])
+# scales of the features could affect the prediction, to normalize the 
+# each features in pre-processing
+from sklearn.preprocessing import StandardScaler
+SCALE = StandardScaler()
+SCALE.fit(x_data[['horsepower','highway-mpg']])
+x_scale = SCALE.transform(x_data[['horsepower','highway-mpg']])
+
+# numpy reshape
+# example np.array(30.0),reshape(-1, 1) means get the 30.0 into an array,
+# then reshape it into a new array, with whatever rows that necessary but
+# fixed 1 column, following example reshaped the 2D array into array with
+# 3 columns
+>>>np.array([[1,2],[3,4],[5,6]]).reshape(-1,3)
+array([[1, 2, 3],
+       [4, 5, 6]])
+
+
+
+
+
+
