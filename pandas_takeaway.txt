@@ -185,6 +185,17 @@ x_scale = SCALE.transform(x_data[['horsepower','highway-mpg']])
 array([[1, 2, 3],
        [4, 5, 6]])
 
+# after create the model to predict value, and calculate the r-square to check
+# the mean square error. The MSE changes for different order of polynomial
+# regression.
+ Rsqu_test = []
+ order = [1,2,3,4]
+ for n in order:
+    pr = PolynomialFeatures(degree=n)
+    x_train_pr = pr.fit_transform(x_train[['horsepower']])
+    x_test_pr = pr.fit_transform(x_text[['horsepower']])
+    lr.fit(x_train_pr, y_train)
+    Rsqu_test.append(lr.score(x_test_pr, y_test))
 
 
 
