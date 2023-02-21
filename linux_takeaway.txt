@@ -1,0 +1,4 @@
+""" to create or open a file in the pycharm light mode, navigate to the folder to the desired directory in the terminal, 
+type command below
+"""
+charm -e <file name>

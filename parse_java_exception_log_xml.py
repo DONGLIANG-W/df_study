@@ -14,7 +14,7 @@ def parse_java_exception_log_xml(log_xml_str):
 
         # Get the exception date
         date_node = exception_node.find('{http://java.sun.com/xml/ns/javaee}date')
-        current_exception['message'] = date_node.text.strip() if date_node is not None else ''
+        current_exception['date'] = date_node.text.strip() if date_node is not None else ''
 
         # Get the exception cause, if any
         cause_node = exception_node.find('{http://java.sun.com/xml/ns/javaee}cause')
